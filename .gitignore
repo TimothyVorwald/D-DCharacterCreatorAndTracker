@@ -1,0 +1,45 @@
+## .NET / Visual Studio ignores for D&DCharacterCreatorAndTracker
+
+# Build output
+[Bb]in/
+[Oo]bj/
+
+# Visual Studio cache/options
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# NuGet (packages.config style restore folder)
+packages/
+*.nupkg
+
+# ReSharper / other IDE caches
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Ll]og/
+[Ll]ogs/
+
+# App-generated data (SQLite database created next to the exe at runtime)
+*.db
+*.db-shm
+*.db-wal
+DnDCharacters.db
+
+# OS junk
+Thumbs.db
+.DS_Store
+
+# Crash/minidump files
+*.dmp
+
+# Test results
+TestResults/
