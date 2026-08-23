@@ -117,6 +117,9 @@ namespace D_DCharacterCreatorAndTracker.Forms
             for (int i = 0; i < weaponArmorProficienciesInOrder.Length; i++)
                 weaponArmorProficiencyCheckBoxes[i].Checked = _character.WeaponArmorProficiencies.Contains(weaponArmorProficienciesInOrder[i]);
 
+            toolProficienciesTextBox.Text = _character.ToolProficiencies;
+            languagesTextBox.Text = _character.Languages;
+
             backgroundTextBox.Text = _character.Background;
             alignmentTextBox.Text = _character.Alignment;
             personalityTextBox.Text = _character.PersonalityTraits;
@@ -404,6 +407,9 @@ namespace D_DCharacterCreatorAndTracker.Forms
             for (int i = 0; i < weaponArmorProficienciesInOrder.Length; i++)
                 if (weaponArmorProficiencyCheckBoxes[i].Checked)
                     _character.WeaponArmorProficiencies.Add(weaponArmorProficienciesInOrder[i]);
+
+            _character.ToolProficiencies = toolProficienciesTextBox.Text;
+            _character.Languages = languagesTextBox.Text;
 
             _character.Background = backgroundTextBox.Text;
             _character.Alignment = alignmentTextBox.Text;

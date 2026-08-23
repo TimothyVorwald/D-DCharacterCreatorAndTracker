@@ -165,6 +165,8 @@ namespace D_DCharacterCreatorAndTracker.Data
             character.Bonds = reader["Bonds"] is DBNull ? "" : reader["Bonds"].ToString();
             character.Flaws = reader["Flaws"] is DBNull ? "" : reader["Flaws"].ToString();
             character.BackstoryNotes = reader["BackstoryNotes"] is DBNull ? "" : reader["BackstoryNotes"].ToString();
+            character.ToolProficiencies = reader["ToolProficiencies"] is DBNull ? "" : reader["ToolProficiencies"].ToString();
+            character.Languages = reader["Languages"] is DBNull ? "" : reader["Languages"].ToString();
             character.CampaignTag = reader["CampaignTag"] is DBNull ? "" : reader["CampaignTag"].ToString();
             character.CreatedAt = Convert.ToDateTime(reader["CreatedAt"]);
             character.UpdatedAt = Convert.ToDateTime(reader["UpdatedAt"]);
@@ -299,6 +301,7 @@ namespace D_DCharacterCreatorAndTracker.Data
                  MaxHitPointsOverride, CurrentHitPoints, TemporaryHitPoints, ArmorClassOverride,
                  Inspiration, DeathSaveSuccesses, DeathSaveFailures, Conditions, ConcentrationSpell,
                  Background, Alignment, PersonalityTraits, Ideals, Bonds, Flaws, BackstoryNotes,
+                 ToolProficiencies, Languages,
                  CampaignTag, CreatedAt, UpdatedAt)
                 VALUES
                 (@Name, @RaceId, @ClassId, @SubclassNote, @ExperiencePoints, @LevelOverride,
@@ -306,6 +309,7 @@ namespace D_DCharacterCreatorAndTracker.Data
                  @MaxHitPointsOverride, @CurrentHitPoints, @TemporaryHitPoints, @ArmorClassOverride,
                  @Inspiration, @DeathSaveSuccesses, @DeathSaveFailures, @Conditions, @ConcentrationSpell,
                  @Background, @Alignment, @PersonalityTraits, @Ideals, @Bonds, @Flaws, @BackstoryNotes,
+                 @ToolProficiencies, @Languages,
                  @CampaignTag, @CreatedAt, @UpdatedAt);
                  SELECT last_insert_rowid();", connection, transaction))
             {
@@ -334,6 +338,7 @@ namespace D_DCharacterCreatorAndTracker.Data
                     ConcentrationSpell = @ConcentrationSpell, Background = @Background,
                     Alignment = @Alignment, PersonalityTraits = @PersonalityTraits, Ideals = @Ideals,
                     Bonds = @Bonds, Flaws = @Flaws, BackstoryNotes = @BackstoryNotes,
+                    ToolProficiencies = @ToolProficiencies, Languages = @Languages,
                     CampaignTag = @CampaignTag, UpdatedAt = @UpdatedAt
                   WHERE Id = @Id", connection, transaction))
             {
@@ -373,6 +378,8 @@ namespace D_DCharacterCreatorAndTracker.Data
             command.Parameters.AddWithValue("@Bonds", character.Bonds ?? "");
             command.Parameters.AddWithValue("@Flaws", character.Flaws ?? "");
             command.Parameters.AddWithValue("@BackstoryNotes", character.BackstoryNotes ?? "");
+            command.Parameters.AddWithValue("@ToolProficiencies", character.ToolProficiencies ?? "");
+            command.Parameters.AddWithValue("@Languages", character.Languages ?? "");
             command.Parameters.AddWithValue("@CampaignTag", character.CampaignTag ?? "");
             command.Parameters.AddWithValue("@CreatedAt", createdAt);
             command.Parameters.AddWithValue("@UpdatedAt", updatedAt);

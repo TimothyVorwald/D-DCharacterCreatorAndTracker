@@ -124,6 +124,16 @@ namespace D_DCharacterCreatorAndTracker.Data
                         ProficiencyKey TEXT NOT NULL,
                         PRIMARY KEY (CharacterId, ProficiencyKey)
                     );");
+
+                // --- Phase 2 (Tools & Languages): simple scalar fields on Characters ---
+                // These are a straightforward 1:1 extension of Character, not
+                // "many rows per character" data like the two tables above, so
+                // they're plain columns rather than another child table.
+                // EnsureColumnExists is what makes that safe for a database
+                // created by an earlier version of the app that predates
+                // these columns.
+                EnsureColumnExists(connection, "Characters", "ToolProficiencies", "TEXT NULL");
+                EnsureColumnExists(connection, "Characters", "Languages", "TEXT NULL");
             }
 
             if (isNewDatabase)
@@ -144,6 +154,39 @@ namespace D_DCharacterCreatorAndTracker.Data
             {
                 command.ExecuteNonQuery();
             }
+        }
+
+        /// <summary>
+        /// Adds a column to an existing table if it isn't already there --
+        /// a lightweight migration primitive for the simple scalar fields
+        /// later phases add to tables that already shipped (e.g. Characters).
+        /// columnDefinitionSql is everything after the column name, e.g.
+        /// "TEXT NULL". Safe to call on every startup: a no-op once the
+        /// column exists. tableName/columnName are always our own hardcoded
+        /// constants, never user input, so building the DDL by concatenation
+        /// is fine here -- table/column names can't be parameterized in
+        /// ADO.NET anyway (same reasoning SeedData.CountRows already relies on).
+        /// </summary>
+        internal static void EnsureColumnExists(SQLiteConnection connection, string tableName, string columnName, string columnDefinitionSql)
+        {
+            if (ColumnExists(connection, tableName, columnName))
+                return;
+
+            ExecuteNonQuery(connection, "ALTER TABLE " + tableName + " ADD COLUMN " + columnName + " " + columnDefinitionSql + ";");
+        }
+
+        private static bool ColumnExists(SQLiteConnection connection, string tableName, string columnName)
+        {
+            using (var command = new SQLiteCommand("PRAGMA table_info(" + tableName + ");", connection))
+            using (var reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    if (string.Equals(reader["name"].ToString(), columnName, StringComparison.OrdinalIgnoreCase))
+                        return true;
+                }
+            }
+            return false;
         }
     }
 }

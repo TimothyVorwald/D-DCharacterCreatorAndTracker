@@ -16,11 +16,9 @@ This is the backlog of everything scoped out during planning but not yet built. 
 - All 6 saving throws with proficiency (auto-derived from class) reflected in a bonus total
 - Passive Perception, auto-calculated (10 + total Perception bonus)
 - Weapon/armor proficiency checklist (simple weapons, martial weapons, light/medium/heavy armor, shields) — a free checklist you set yourself, no enforcement of what your class "should" get
+- Tools & languages as two freeform text fields (Tool Proficiencies, Languages) on the Skills & Saves tab, no catalog or validation
 
 ## Not Yet Implemented
-
-### Tools & Languages
-- Tools & languages as a simple freeform text list (the rest of the Skills & Saving Throws work landed in Phase 2; this piece was deliberately split off for a separate pass)
 
 ### Inventory & Equipment
 - Structured inventory items (name, quantity, weight, value, category) pulled from a built-in SRD weapons/armor/gear catalog

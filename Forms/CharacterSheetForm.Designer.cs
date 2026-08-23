@@ -79,6 +79,10 @@ namespace D_DCharacterCreatorAndTracker.Forms
         private WeaponArmorProficiency[] weaponArmorProficienciesInOrder;
         private CheckBox[] weaponArmorProficiencyCheckBoxes;
 
+        private GroupBox toolsAndLanguagesGroupBox;
+        private TextBox toolProficienciesTextBox;
+        private TextBox languagesTextBox;
+
         private TextBox backgroundTextBox;
         private TextBox alignmentTextBox;
         private TextBox personalityTextBox;
@@ -573,11 +577,13 @@ namespace D_DCharacterCreatorAndTracker.Forms
             BuildSavingThrowsGroup();
             BuildSkillsGroup();
             BuildWeaponArmorProficiencyGroup();
+            BuildToolsAndLanguagesGroup();
 
             flowPanel.Controls.Add(this.passivePerceptionGroupBox);
             flowPanel.Controls.Add(this.savingThrowsGroupBox);
             flowPanel.Controls.Add(this.skillsGroupBox);
             flowPanel.Controls.Add(this.weaponArmorProficiencyGroupBox);
+            flowPanel.Controls.Add(this.toolsAndLanguagesGroupBox);
 
             panel.Controls.Add(flowPanel);
             this.skillsTabPage.Controls.Add(panel);
@@ -717,6 +723,25 @@ namespace D_DCharacterCreatorAndTracker.Forms
             }
 
             this.weaponArmorProficiencyGroupBox.Controls.Add(flow);
+        }
+
+        private void BuildToolsAndLanguagesGroup()
+        {
+            this.toolsAndLanguagesGroupBox = new GroupBox();
+            this.toolsAndLanguagesGroupBox.Text = "Tools && Languages";
+            this.toolsAndLanguagesGroupBox.AutoSize = true;
+            this.toolsAndLanguagesGroupBox.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            this.toolsAndLanguagesGroupBox.Width = 700;
+
+            var table = CreateFieldTable();
+
+            this.toolProficienciesTextBox = CreateMultilineBox();
+            AddRow(table, "Tool Proficiencies", this.toolProficienciesTextBox);
+
+            this.languagesTextBox = CreateMultilineBox();
+            AddRow(table, "Languages", this.languagesTextBox);
+
+            this.toolsAndLanguagesGroupBox.Controls.Add(table);
         }
     }
 }

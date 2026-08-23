@@ -85,6 +85,12 @@ namespace D_DCharacterCreatorAndTracker.Models
         /// </summary>
         public HashSet<WeaponArmorProficiency> WeaponArmorProficiencies { get; set; }
 
+        /// <summary>Freeform list of tool proficiencies (e.g. "Thieves' Tools, Herbalism Kit").</summary>
+        public string ToolProficiencies { get; set; }
+
+        /// <summary>Freeform list of known languages (e.g. "Common, Elvish").</summary>
+        public string Languages { get; set; }
+
         public string Background { get; set; }
         public string Alignment { get; set; }
         public string PersonalityTraits { get; set; }
@@ -108,6 +114,8 @@ namespace D_DCharacterCreatorAndTracker.Models
             ProficientSkills = new HashSet<Skill>();
             ExpertiseSkills = new HashSet<Skill>();
             WeaponArmorProficiencies = new HashSet<WeaponArmorProficiency>();
+            ToolProficiencies = string.Empty;
+            Languages = string.Empty;
         }
 
         /// <summary>
