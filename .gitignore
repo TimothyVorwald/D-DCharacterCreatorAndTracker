@@ -43,3 +43,13 @@ Thumbs.db
 
 # Test results
 TestResults/
+/.vs/D&DCharacterCreatorAndTracker/v17/.suo
+/.vs/D&DCharacterCreatorAndTracker/v17/DocumentLayout.backup.json
+/.vs/D&DCharacterCreatorAndTracker/v17/DocumentLayout.json
+/bin/Debug/D&DCharacterCreatorAndTracker.exe
+/bin/Debug/D&DCharacterCreatorAndTracker.pdb
+/obj/Debug/D&DCharacterCreatorAndTracker.csproj.AssemblyReference.cache
+/obj/Debug/D&DCharacterCreatorAndTracker.csproj.CoreCompileInputs.cache
+/obj/Debug/D&DCharacterCreatorAndTracker.csproj.FileListAbsolute.txt
+/obj/Debug/D&DCharacterCreatorAndTracker.exe
+/obj/Debug/D&DCharacterCreatorAndTracker.pdb
