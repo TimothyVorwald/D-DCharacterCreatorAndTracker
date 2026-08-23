@@ -9,14 +9,18 @@ This is the backlog of everything scoped out during planning but not yet built. 
 - Background tab: background, alignment, personality traits, ideals, bonds, flaws, backstory notes
 - SRD 5.1 (2014 rules) reference data seeded for all 14 races/subraces and all 12 classes
 
-## Not Yet Implemented
+## Phase 2 — Done
 
 ### Skills & Saving Throws
-- Full 18-skill list tied to its governing ability, with proficiency and expertise checkboxes and auto-calculated bonuses
-- All 6 saving throws with proficiency (already auto-derived from class) reflected in a bonus total
-- Passive Perception, auto-calculated
+- Full 18-skill list tied to its governing ability, with proficiency and expertise checkboxes and auto-calculated bonuses (grouped by ability on the Skills & Saves tab; expertise implies proficiency, enforced in the UI)
+- All 6 saving throws with proficiency (auto-derived from class) reflected in a bonus total
+- Passive Perception, auto-calculated (10 + total Perception bonus)
 - Weapon/armor proficiency checklist (simple weapons, martial weapons, light/medium/heavy armor, shields) — a free checklist you set yourself, no enforcement of what your class "should" get
-- Tools & languages as a simple freeform text list
+
+## Not Yet Implemented
+
+### Tools & Languages
+- Tools & languages as a simple freeform text list (the rest of the Skills & Saving Throws work landed in Phase 2; this piece was deliberately split off for a separate pass)
 
 ### Inventory & Equipment
 - Structured inventory items (name, quantity, weight, value, category) pulled from a built-in SRD weapons/armor/gear catalog

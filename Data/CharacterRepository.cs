@@ -114,6 +114,8 @@ namespace D_DCharacterCreatorAndTracker.Data
 
                     character = ReadCharacter(reader);
                 }
+
+                LoadSkillsAndProficiencies(connection, character);
             }
 
             var races = GetAllRaces();
@@ -170,19 +172,121 @@ namespace D_DCharacterCreatorAndTracker.Data
             return character;
         }
 
+        /// <summary>
+        /// Populates a hydrated Character's ProficientSkills, ExpertiseSkills,
+        /// and WeaponArmorProficiencies from the CharacterSkills/
+        /// CharacterProficiencies child tables. Unrecognized Skill/
+        /// WeaponArmorProficiency text (e.g. from a row written by a future
+        /// version of the app) is skipped rather than throwing.
+        /// </summary>
+        private static void LoadSkillsAndProficiencies(SQLiteConnection connection, Character character)
+        {
+            using (var command = new SQLiteCommand(
+                "SELECT Skill, Proficient, Expertise FROM CharacterSkills WHERE CharacterId = @id", connection))
+            {
+                command.Parameters.AddWithValue("@id", character.Id);
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        Skill skill;
+                        if (!Enum.TryParse(reader["Skill"].ToString(), out skill))
+                            continue;
+
+                        if (Convert.ToInt32(reader["Proficient"]) != 0)
+                            character.ProficientSkills.Add(skill);
+                        if (Convert.ToInt32(reader["Expertise"]) != 0)
+                            character.ExpertiseSkills.Add(skill);
+                    }
+                }
+            }
+
+            using (var command = new SQLiteCommand(
+                "SELECT ProficiencyKey FROM CharacterProficiencies WHERE CharacterId = @id", connection))
+            {
+                command.Parameters.AddWithValue("@id", character.Id);
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        WeaponArmorProficiency proficiency;
+                        if (Enum.TryParse(reader["ProficiencyKey"].ToString(), out proficiency))
+                            character.WeaponArmorProficiencies.Add(proficiency);
+                    }
+                }
+            }
+        }
+
         public int Save(Character character)
         {
             using (var connection = DatabaseHelper.GetConnection())
+            using (var transaction = connection.BeginTransaction())
             {
                 if (character.Id == 0)
-                    return Insert(connection, character);
+                    Insert(connection, transaction, character);
+                else
+                    Update(connection, transaction, character);
 
-                Update(connection, character);
+                SaveSkillsAndProficiencies(connection, transaction, character);
+
+                transaction.Commit();
                 return character.Id;
             }
         }
 
-        private int Insert(SQLiteConnection connection, Character character)
+        /// <summary>
+        /// Deletes and reinserts every CharacterSkills/CharacterProficiencies
+        /// row for this character -- the sheet saves as one atomic unit off a
+        /// single Save button, so there's no need to diff against what's
+        /// already stored. Only skills with something checked get a row
+        /// (sparse), matching the presence-only CharacterProficiencies table.
+        /// </summary>
+        private static void SaveSkillsAndProficiencies(SQLiteConnection connection, SQLiteTransaction transaction, Character character)
+        {
+            using (var command = new SQLiteCommand("DELETE FROM CharacterSkills WHERE CharacterId = @id", connection, transaction))
+            {
+                command.Parameters.AddWithValue("@id", character.Id);
+                command.ExecuteNonQuery();
+            }
+
+            foreach (var skill in SkillCatalog.InDisplayOrder())
+            {
+                bool proficient = character.ProficientSkills.Contains(skill);
+                bool expertise = character.ExpertiseSkills.Contains(skill);
+                if (!proficient && !expertise)
+                    continue;
+
+                using (var command = new SQLiteCommand(
+                    @"INSERT INTO CharacterSkills (CharacterId, Skill, Proficient, Expertise)
+                      VALUES (@CharacterId, @Skill, @Proficient, @Expertise)", connection, transaction))
+                {
+                    command.Parameters.AddWithValue("@CharacterId", character.Id);
+                    command.Parameters.AddWithValue("@Skill", skill.ToString());
+                    command.Parameters.AddWithValue("@Proficient", proficient ? 1 : 0);
+                    command.Parameters.AddWithValue("@Expertise", expertise ? 1 : 0);
+                    command.ExecuteNonQuery();
+                }
+            }
+
+            using (var command = new SQLiteCommand("DELETE FROM CharacterProficiencies WHERE CharacterId = @id", connection, transaction))
+            {
+                command.Parameters.AddWithValue("@id", character.Id);
+                command.ExecuteNonQuery();
+            }
+
+            foreach (var proficiency in character.WeaponArmorProficiencies)
+            {
+                using (var command = new SQLiteCommand(
+                    "INSERT INTO CharacterProficiencies (CharacterId, ProficiencyKey) VALUES (@CharacterId, @ProficiencyKey)", connection, transaction))
+                {
+                    command.Parameters.AddWithValue("@CharacterId", character.Id);
+                    command.Parameters.AddWithValue("@ProficiencyKey", proficiency.ToString());
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        private int Insert(SQLiteConnection connection, SQLiteTransaction transaction, Character character)
         {
             DateTime now = DateTime.UtcNow;
             character.CreatedAt = now;
@@ -203,7 +307,7 @@ namespace D_DCharacterCreatorAndTracker.Data
                  @Inspiration, @DeathSaveSuccesses, @DeathSaveFailures, @Conditions, @ConcentrationSpell,
                  @Background, @Alignment, @PersonalityTraits, @Ideals, @Bonds, @Flaws, @BackstoryNotes,
                  @CampaignTag, @CreatedAt, @UpdatedAt);
-                 SELECT last_insert_rowid();", connection))
+                 SELECT last_insert_rowid();", connection, transaction))
             {
                 BindCharacterParameters(command, character, now.ToString("o"), now.ToString("o"));
                 long newId = (long)command.ExecuteScalar();
@@ -212,7 +316,7 @@ namespace D_DCharacterCreatorAndTracker.Data
             }
         }
 
-        private void Update(SQLiteConnection connection, Character character)
+        private void Update(SQLiteConnection connection, SQLiteTransaction transaction, Character character)
         {
             DateTime now = DateTime.UtcNow;
             character.UpdatedAt = now;
@@ -231,7 +335,7 @@ namespace D_DCharacterCreatorAndTracker.Data
                     Alignment = @Alignment, PersonalityTraits = @PersonalityTraits, Ideals = @Ideals,
                     Bonds = @Bonds, Flaws = @Flaws, BackstoryNotes = @BackstoryNotes,
                     CampaignTag = @CampaignTag, UpdatedAt = @UpdatedAt
-                  WHERE Id = @Id", connection))
+                  WHERE Id = @Id", connection, transaction))
             {
                 command.Parameters.AddWithValue("@Id", character.Id);
                 BindCharacterParameters(command, character, character.CreatedAt.ToString("o"), now.ToString("o"));

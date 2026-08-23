@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace D_DCharacterCreatorAndTracker.Models
 {
@@ -67,6 +68,23 @@ namespace D_DCharacterCreatorAndTracker.Models
         /// <summary>The spell currently being concentrated on, if any.</summary>
         public string ConcentrationSpell { get; set; }
 
+        /// <summary>Skills the character is proficient in (adds ProficiencyBonus).</summary>
+        public HashSet<Skill> ProficientSkills { get; set; }
+
+        /// <summary>
+        /// Skills the character has expertise in (adds ProficiencyBonus a
+        /// second time). Expertise implies proficiency -- the UI enforces
+        /// that a skill can't be in this set without also being in
+        /// ProficientSkills, so GetSkillBonus doesn't need to guard against it.
+        /// </summary>
+        public HashSet<Skill> ExpertiseSkills { get; set; }
+
+        /// <summary>
+        /// Free checklist of weapon/armor categories the character is
+        /// proficient with -- no enforcement of what the class "should" get.
+        /// </summary>
+        public HashSet<WeaponArmorProficiency> WeaponArmorProficiencies { get; set; }
+
         public string Background { get; set; }
         public string Alignment { get; set; }
         public string PersonalityTraits { get; set; }
@@ -87,6 +105,9 @@ namespace D_DCharacterCreatorAndTracker.Models
             CurrentHitPoints = 0;
             TemporaryHitPoints = 0;
             Conditions = string.Empty;
+            ProficientSkills = new HashSet<Skill>();
+            ExpertiseSkills = new HashSet<Skill>();
+            WeaponArmorProficiencies = new HashSet<WeaponArmorProficiency>();
         }
 
         /// <summary>
@@ -180,6 +201,39 @@ namespace D_DCharacterCreatorAndTracker.Models
             if (IsProficientInSave(ability))
                 modifier += ProficiencyBonus;
             return modifier;
+        }
+
+        public bool IsProficientInSkill(Skill skill)
+        {
+            return ProficientSkills.Contains(skill);
+        }
+
+        public bool HasExpertiseInSkill(Skill skill)
+        {
+            return ExpertiseSkills.Contains(skill);
+        }
+
+        /// <summary>
+        /// Ability modifier, plus ProficiencyBonus if proficient, plus a
+        /// second ProficiencyBonus if the skill also has expertise.
+        /// </summary>
+        public int GetSkillBonus(Skill skill)
+        {
+            int modifier = Abilities.GetModifier(SkillCatalog.GetGoverningAbility(skill));
+
+            if (HasExpertiseInSkill(skill))
+                return modifier + (ProficiencyBonus * 2);
+
+            if (IsProficientInSkill(skill))
+                return modifier + ProficiencyBonus;
+
+            return modifier;
+        }
+
+        /// <summary>10 + the character's total Perception skill bonus.</summary>
+        public int PassivePerception
+        {
+            get { return 10 + GetSkillBonus(Skill.Perception); }
         }
 
         private static string AbilityAbbreviation(Ability ability)

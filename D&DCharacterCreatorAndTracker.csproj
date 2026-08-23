@@ -75,6 +75,8 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Models\Enums.cs" />
+    <Compile Include="Models\SkillCatalog.cs" />
+    <Compile Include="Models\ProficiencyCatalog.cs" />
     <Compile Include="Models\Race.cs" />
     <Compile Include="Models\CharacterClass.cs" />
     <Compile Include="Models\AbilityScores.cs" />
