@@ -102,6 +102,28 @@ namespace D_DCharacterCreatorAndTracker.Data
                         CreatedAt TEXT NOT NULL,
                         UpdatedAt TEXT NOT NULL
                     );");
+
+                // --- Phase 2: skills, saving throws, weapon/armor proficiencies ---
+                // Child tables rather than columns on Characters, so this stays a
+                // pure CREATE TABLE IF NOT EXISTS addition -- no ALTER TABLE
+                // migration needed for a database created by an earlier version
+                // of the app. Foreign Keys=True (see ConnectionString) means
+                // deleting a Character cascades into both of these.
+                ExecuteNonQuery(connection, @"
+                    CREATE TABLE IF NOT EXISTS CharacterSkills (
+                        CharacterId INTEGER NOT NULL REFERENCES Characters(Id) ON DELETE CASCADE,
+                        Skill TEXT NOT NULL,
+                        Proficient INTEGER NOT NULL DEFAULT 0,
+                        Expertise INTEGER NOT NULL DEFAULT 0,
+                        PRIMARY KEY (CharacterId, Skill)
+                    );");
+
+                ExecuteNonQuery(connection, @"
+                    CREATE TABLE IF NOT EXISTS CharacterProficiencies (
+                        CharacterId INTEGER NOT NULL REFERENCES Characters(Id) ON DELETE CASCADE,
+                        ProficiencyKey TEXT NOT NULL,
+                        PRIMARY KEY (CharacterId, ProficiencyKey)
+                    );");
             }
 
             if (isNewDatabase)

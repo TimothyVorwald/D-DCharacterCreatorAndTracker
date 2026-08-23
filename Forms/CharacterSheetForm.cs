@@ -8,13 +8,22 @@ namespace D_DCharacterCreatorAndTracker.Forms
 {
     /// <summary>
     /// The tabbed character sheet. The Core tab (identity, progression,
-    /// ability scores, combat stats, live-play status) plus a Background
-    /// tab are fully functional in Phase 1; the remaining tabs are
-    /// placeholders for later phases (skills/saves, inventory, attacks,
-    /// spellcasting, abilities &amp; features).
+    /// ability scores, combat stats, live-play status), Background tab, and
+    /// Skills &amp; Saves tab (skills, saving throws, passive perception,
+    /// weapon/armor proficiencies) are fully functional; the remaining tabs
+    /// are placeholders for later phases (inventory, attacks, spellcasting,
+    /// abilities &amp; features).
     /// </summary>
     public partial class CharacterSheetForm : Form
     {
+        // Strength..Charisma order used everywhere ability-indexed arrays
+        // appear on this form (abilityScoreInputs, savingThrowBonusLabels).
+        private static readonly Ability[] AbilityOrder =
+        {
+            Ability.Strength, Ability.Dexterity, Ability.Constitution,
+            Ability.Intelligence, Ability.Wisdom, Ability.Charisma
+        };
+
         private readonly CharacterRepository _repository;
         private readonly Character _character;
         private List<Race> _races;
@@ -97,6 +106,16 @@ namespace D_DCharacterCreatorAndTracker.Forms
             }
             conditionsTextBox.Text = _character.Conditions;
             concentrationTextBox.Text = _character.ConcentrationSpell;
+
+            for (int i = 0; i < skillsInOrder.Length; i++)
+            {
+                Skill skill = skillsInOrder[i];
+                skillProficientCheckBoxes[i].Checked = _character.ProficientSkills.Contains(skill);
+                skillExpertiseCheckBoxes[i].Checked = _character.ExpertiseSkills.Contains(skill);
+            }
+
+            for (int i = 0; i < weaponArmorProficienciesInOrder.Length; i++)
+                weaponArmorProficiencyCheckBoxes[i].Checked = _character.WeaponArmorProficiencies.Contains(weaponArmorProficienciesInOrder[i]);
 
             backgroundTextBox.Text = _character.Background;
             alignmentTextBox.Text = _character.Alignment;
@@ -181,6 +200,43 @@ namespace D_DCharacterCreatorAndTracker.Forms
         }
 
         /// <summary>
+        /// Expertise implies proficiency in 5e -- a skill can't have
+        /// expertise without also being proficient. Rather than disabling
+        /// controls, unchecking Proficient while Expertise is checked
+        /// cascades to uncheck Expertise too (see SkillExpertiseCheckBox_
+        /// CheckedChanged for the other direction). Each cascade re-fires
+        /// the paired handler, which is what actually triggers the single
+        /// RecalculateDerivedStats call for the user's action.
+        /// </summary>
+        private void SkillProficientCheckBox_CheckedChanged(int skillIndex)
+        {
+            if (_isLoadingCharacter)
+                return;
+
+            if (!skillProficientCheckBoxes[skillIndex].Checked && skillExpertiseCheckBoxes[skillIndex].Checked)
+            {
+                skillExpertiseCheckBoxes[skillIndex].Checked = false;
+                return;
+            }
+
+            RecalculateDerivedStats(this, EventArgs.Empty);
+        }
+
+        private void SkillExpertiseCheckBox_CheckedChanged(int skillIndex)
+        {
+            if (_isLoadingCharacter)
+                return;
+
+            if (skillExpertiseCheckBoxes[skillIndex].Checked && !skillProficientCheckBoxes[skillIndex].Checked)
+            {
+                skillProficientCheckBoxes[skillIndex].Checked = true;
+                return;
+            }
+
+            RecalculateDerivedStats(this, EventArgs.Empty);
+        }
+
+        /// <summary>
         /// Recomputes every read-only derived value (level, proficiency
         /// bonus, max HP, AC, speed) from the current form inputs. Wired to
         /// the ValueChanged/CheckedChanged/SelectedIndexChanged events of
@@ -206,6 +262,28 @@ namespace D_DCharacterCreatorAndTracker.Forms
                 : snapshot.ArmorClass.ToString();
 
             speedValueLabel.Text = snapshot.Speed + " ft.";
+
+            RefreshSavingThrows(snapshot);
+            RefreshSkills(snapshot);
+            passivePerceptionValueLabel.Text = snapshot.PassivePerception.ToString();
+        }
+
+        private void RefreshSavingThrows(Character snapshot)
+        {
+            for (int i = 0; i < AbilityOrder.Length; i++)
+            {
+                Ability ability = AbilityOrder[i];
+                string text = FormatModifier(snapshot.GetSavingThrowBonus(ability));
+                if (snapshot.IsProficientInSave(ability))
+                    text += " (proficient)";
+                savingThrowBonusLabels[i].Text = text;
+            }
+        }
+
+        private void RefreshSkills(Character snapshot)
+        {
+            for (int i = 0; i < skillsInOrder.Length; i++)
+                skillBonusValueLabels[i].Text = FormatModifier(snapshot.GetSkillBonus(skillsInOrder[i]));
         }
 
         /// <summary>
@@ -227,6 +305,16 @@ namespace D_DCharacterCreatorAndTracker.Forms
             snapshot.Abilities.Charisma = (int)abilityScoreInputs[5].Value;
             snapshot.Race = raceComboBox.SelectedItem as Race;
             snapshot.Class = classComboBox.SelectedItem as CharacterClass;
+
+            for (int i = 0; i < skillsInOrder.Length; i++)
+            {
+                Skill skill = skillsInOrder[i];
+                if (skillProficientCheckBoxes[i].Checked)
+                    snapshot.ProficientSkills.Add(skill);
+                if (skillExpertiseCheckBoxes[i].Checked)
+                    snapshot.ExpertiseSkills.Add(skill);
+            }
+
             return snapshot;
         }
 
@@ -300,6 +388,22 @@ namespace D_DCharacterCreatorAndTracker.Forms
 
             _character.Conditions = conditionsTextBox.Text;
             _character.ConcentrationSpell = concentrationTextBox.Text;
+
+            _character.ProficientSkills.Clear();
+            _character.ExpertiseSkills.Clear();
+            for (int i = 0; i < skillsInOrder.Length; i++)
+            {
+                Skill skill = skillsInOrder[i];
+                if (skillProficientCheckBoxes[i].Checked)
+                    _character.ProficientSkills.Add(skill);
+                if (skillExpertiseCheckBoxes[i].Checked)
+                    _character.ExpertiseSkills.Add(skill);
+            }
+
+            _character.WeaponArmorProficiencies.Clear();
+            for (int i = 0; i < weaponArmorProficienciesInOrder.Length; i++)
+                if (weaponArmorProficiencyCheckBoxes[i].Checked)
+                    _character.WeaponArmorProficiencies.Add(weaponArmorProficienciesInOrder[i]);
 
             _character.Background = backgroundTextBox.Text;
             _character.Alignment = alignmentTextBox.Text;

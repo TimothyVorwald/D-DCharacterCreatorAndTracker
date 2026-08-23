@@ -1,6 +1,7 @@
 using System;
 using System.Drawing;
 using System.Windows.Forms;
+using D_DCharacterCreatorAndTracker.Models;
 
 namespace D_DCharacterCreatorAndTracker.Forms
 {
@@ -62,6 +63,22 @@ namespace D_DCharacterCreatorAndTracker.Forms
         private TextBox conditionsTextBox;
         private TextBox concentrationTextBox;
 
+        private GroupBox passivePerceptionGroupBox;
+        private Label passivePerceptionValueLabel;
+
+        private GroupBox savingThrowsGroupBox;
+        private Label[] savingThrowBonusLabels;
+
+        private GroupBox skillsGroupBox;
+        private Skill[] skillsInOrder;
+        private CheckBox[] skillProficientCheckBoxes;
+        private CheckBox[] skillExpertiseCheckBoxes;
+        private Label[] skillBonusValueLabels;
+
+        private GroupBox weaponArmorProficiencyGroupBox;
+        private WeaponArmorProficiency[] weaponArmorProficienciesInOrder;
+        private CheckBox[] weaponArmorProficiencyCheckBoxes;
+
         private TextBox backgroundTextBox;
         private TextBox alignmentTextBox;
         private TextBox personalityTextBox;
@@ -97,8 +114,7 @@ namespace D_DCharacterCreatorAndTracker.Forms
 
             BuildCoreTab();
             BuildBackgroundTab();
-            BuildPlaceholderTab(this.skillsTabPage,
-                "Skills, saving throws, and weapon/armor proficiencies are coming in a later phase.");
+            BuildSkillsTab();
             BuildPlaceholderTab(this.inventoryTabPage,
                 "Structured inventory and equipment (linked to Attacks and Armor Class) are coming in a later phase.");
             BuildPlaceholderTab(this.attacksTabPage,
@@ -218,6 +234,39 @@ namespace D_DCharacterCreatorAndTracker.Forms
             foreach (var control in controls)
                 panel.Controls.Add(control);
             return panel;
+        }
+
+        /// <summary>
+        /// A bold, full-width label used to break the Skills group into
+        /// STR/DEX/CON/INT/WIS/CHA sections within the same two-column table.
+        /// </summary>
+        private static void AddSectionHeader(TableLayoutPanel table, string text)
+        {
+            int row = table.RowStyles.Count;
+            table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+            var label = new Label();
+            label.Text = text;
+            label.AutoSize = true;
+            label.Margin = new Padding(3, 10, 3, 3);
+            label.Font = new Font(label.Font, FontStyle.Bold);
+
+            table.Controls.Add(label, 0, row);
+            table.SetColumnSpan(label, 2);
+        }
+
+        private static string AbilityDisplayName(Ability ability)
+        {
+            switch (ability)
+            {
+                case Ability.Strength: return "Strength";
+                case Ability.Dexterity: return "Dexterity";
+                case Ability.Constitution: return "Constitution";
+                case Ability.Intelligence: return "Intelligence";
+                case Ability.Wisdom: return "Wisdom";
+                case Ability.Charisma: return "Charisma";
+                default: throw new ArgumentOutOfRangeException("ability");
+            }
         }
 
         private void BuildIdentityGroup()
@@ -505,6 +554,169 @@ namespace D_DCharacterCreatorAndTracker.Forms
             box.Height = 60;
             box.ScrollBars = ScrollBars.Vertical;
             return box;
+        }
+
+        private void BuildSkillsTab()
+        {
+            var panel = new Panel();
+            panel.Dock = DockStyle.Fill;
+            panel.AutoScroll = true;
+
+            var flowPanel = new FlowLayoutPanel();
+            flowPanel.FlowDirection = FlowDirection.TopDown;
+            flowPanel.WrapContents = false;
+            flowPanel.AutoSize = true;
+            flowPanel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            flowPanel.Padding = new Padding(10);
+
+            BuildPassivePerceptionGroup();
+            BuildSavingThrowsGroup();
+            BuildSkillsGroup();
+            BuildWeaponArmorProficiencyGroup();
+
+            flowPanel.Controls.Add(this.passivePerceptionGroupBox);
+            flowPanel.Controls.Add(this.savingThrowsGroupBox);
+            flowPanel.Controls.Add(this.skillsGroupBox);
+            flowPanel.Controls.Add(this.weaponArmorProficiencyGroupBox);
+
+            panel.Controls.Add(flowPanel);
+            this.skillsTabPage.Controls.Add(panel);
+        }
+
+        private void BuildPassivePerceptionGroup()
+        {
+            this.passivePerceptionGroupBox = new GroupBox();
+            this.passivePerceptionGroupBox.Text = "Passive Perception";
+            this.passivePerceptionGroupBox.AutoSize = true;
+            this.passivePerceptionGroupBox.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            this.passivePerceptionGroupBox.Width = 700;
+
+            var table = CreateFieldTable();
+
+            this.passivePerceptionValueLabel = new Label();
+            this.passivePerceptionValueLabel.AutoSize = true;
+            this.passivePerceptionValueLabel.Text = "10";
+            this.passivePerceptionValueLabel.Font = new Font(this.Font, FontStyle.Bold);
+            AddRow(table, "Passive Perception (10 + Perception)", this.passivePerceptionValueLabel);
+
+            this.passivePerceptionGroupBox.Controls.Add(table);
+        }
+
+        private void BuildSavingThrowsGroup()
+        {
+            this.savingThrowsGroupBox = new GroupBox();
+            this.savingThrowsGroupBox.Text = "Saving Throws";
+            this.savingThrowsGroupBox.AutoSize = true;
+            this.savingThrowsGroupBox.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            this.savingThrowsGroupBox.Width = 700;
+
+            var table = CreateFieldTable();
+            this.savingThrowBonusLabels = new Label[6];
+
+            Ability[] abilityOrder =
+            {
+                Ability.Strength, Ability.Dexterity, Ability.Constitution,
+                Ability.Intelligence, Ability.Wisdom, Ability.Charisma
+            };
+
+            for (int i = 0; i < abilityOrder.Length; i++)
+            {
+                var bonusLabel = new Label();
+                bonusLabel.AutoSize = true;
+                bonusLabel.Text = "+0";
+
+                AddRow(table, AbilityDisplayName(abilityOrder[i]) + " Save", bonusLabel);
+                this.savingThrowBonusLabels[i] = bonusLabel;
+            }
+
+            this.savingThrowsGroupBox.Controls.Add(table);
+        }
+
+        private void BuildSkillsGroup()
+        {
+            this.skillsGroupBox = new GroupBox();
+            this.skillsGroupBox.Text = "Skills";
+            this.skillsGroupBox.AutoSize = true;
+            this.skillsGroupBox.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            this.skillsGroupBox.Width = 700;
+
+            var table = CreateFieldTable();
+
+            this.skillsInOrder = SkillCatalog.InDisplayOrder();
+            this.skillProficientCheckBoxes = new CheckBox[this.skillsInOrder.Length];
+            this.skillExpertiseCheckBoxes = new CheckBox[this.skillsInOrder.Length];
+            this.skillBonusValueLabels = new Label[this.skillsInOrder.Length];
+
+            Ability? lastAbilityHeading = null;
+
+            for (int i = 0; i < this.skillsInOrder.Length; i++)
+            {
+                Skill skill = this.skillsInOrder[i];
+                Ability governingAbility = SkillCatalog.GetGoverningAbility(skill);
+
+                if (governingAbility != lastAbilityHeading)
+                {
+                    AddSectionHeader(table, AbilityDisplayName(governingAbility));
+                    lastAbilityHeading = governingAbility;
+                }
+
+                var proficientCheckBox = new CheckBox();
+                proficientCheckBox.Text = "Prof";
+                proficientCheckBox.AutoSize = true;
+
+                var expertiseCheckBox = new CheckBox();
+                expertiseCheckBox.Text = "Exp";
+                expertiseCheckBox.AutoSize = true;
+                expertiseCheckBox.Margin = new Padding(12, 4, 3, 4);
+
+                var bonusLabel = new Label();
+                bonusLabel.AutoSize = true;
+                bonusLabel.Text = "+0";
+                bonusLabel.Margin = new Padding(12, 8, 3, 3);
+
+                int skillIndex = i;
+                proficientCheckBox.CheckedChanged += (s, e) => this.SkillProficientCheckBox_CheckedChanged(skillIndex);
+                expertiseCheckBox.CheckedChanged += (s, e) => this.SkillExpertiseCheckBox_CheckedChanged(skillIndex);
+
+                AddRow(table, SkillCatalog.GetDisplayName(skill), Row(proficientCheckBox, expertiseCheckBox, bonusLabel));
+
+                this.skillProficientCheckBoxes[i] = proficientCheckBox;
+                this.skillExpertiseCheckBoxes[i] = expertiseCheckBox;
+                this.skillBonusValueLabels[i] = bonusLabel;
+            }
+
+            this.skillsGroupBox.Controls.Add(table);
+        }
+
+        private void BuildWeaponArmorProficiencyGroup()
+        {
+            this.weaponArmorProficiencyGroupBox = new GroupBox();
+            this.weaponArmorProficiencyGroupBox.Text = "Weapon && Armor Proficiencies";
+            this.weaponArmorProficiencyGroupBox.AutoSize = true;
+            this.weaponArmorProficiencyGroupBox.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            this.weaponArmorProficiencyGroupBox.Width = 700;
+
+            var flow = new FlowLayoutPanel();
+            flow.FlowDirection = FlowDirection.TopDown;
+            flow.WrapContents = false;
+            flow.AutoSize = true;
+            flow.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            flow.Padding = new Padding(8);
+
+            this.weaponArmorProficienciesInOrder = ProficiencyCatalog.InDisplayOrder();
+            this.weaponArmorProficiencyCheckBoxes = new CheckBox[this.weaponArmorProficienciesInOrder.Length];
+
+            for (int i = 0; i < this.weaponArmorProficienciesInOrder.Length; i++)
+            {
+                var checkBox = new CheckBox();
+                checkBox.Text = ProficiencyCatalog.GetDisplayName(this.weaponArmorProficienciesInOrder[i]);
+                checkBox.AutoSize = true;
+                checkBox.Margin = new Padding(3, 4, 3, 4);
+                flow.Controls.Add(checkBox);
+                this.weaponArmorProficiencyCheckBoxes[i] = checkBox;
+            }
+
+            this.weaponArmorProficiencyGroupBox.Controls.Add(flow);
         }
     }
 }
